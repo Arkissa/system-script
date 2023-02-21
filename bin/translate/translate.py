@@ -1,20 +1,37 @@
 #!/bin/python3
 
 import requests
-import pyperclip
+import xerox
 import subprocess
 import asyncio
-import time
 from urllib.parse import quote_plus
 from lxml import etree
 
 
+class misc:
+    def __init__(self) -> None:
+        self.mouse = open("/dev/input/mice", "rb")
+
+    def bindLeft(self) -> int:
+        return self.mouse.read(3)[0] & 0x1
+
+    def close(self):
+        self.mouse.close()
+
+
+class clip:
+    def copy(self) -> None:
+        xerox.copy("", True)
+
+    def paste(self) -> str:
+        return xerox.paste(True)
+
+
 class trans:
-    def __init__(self, text) -> None:
+    def __init__(self) -> None:
         self.request = requests.Session()
-        self.text = text
         self.url = {
-            "google": "https://translate.google.com.hk/translate_a/single?client=gtx&sl=auto&tl={}&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&q={}",
+            "google": "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={}&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&q={}",
             "haici": "https://apii.dict.cn/mini.php?q=",
             "youdao": "https://dict.youdao.com/jsonapi_s?doctype=json&jsonversion=4",
             "baidu": "https://fanyi.baidu.com/sug",
@@ -25,11 +42,11 @@ class trans:
             "Accept-Language": "en-US,en;q=0.5",
         }
 
-    async def google(self):
+    async def google(self, text):
         t = ""
         num = 0
-        text = quote_plus(self.text)
-        for t in self.text:
+        text = quote_plus(text)
+        for t in text:
             if ord(t) > 255:
                 num += 1
             else:
@@ -47,15 +64,18 @@ class trans:
 
             fanyi = response.json()
 
-            t = fanyi[0][0] and f"google:\n{fanyi[0][0][0]}\n" or ""
+            print(fanyi)
+            t = fanyi[0][0] and f"<b>󰭻 Google</b>\n{fanyi[0][0][0]}\n" or ""
         except Exception:
+            t = ""
             pass
 
+        print(t)
         return t
 
-    async def haici(self):
+    async def haici(self, text):
         t = ""
-        text = quote_plus(self.text)
+        text = quote_plus(text)
         try:
             response = self.request.get(
                 self.url["haici"] + text, headers=self.headers, timeout=5
@@ -65,16 +85,17 @@ class trans:
 
             html = etree.HTML(response.text)
             haici = html.xpath("/html/body/div[1]/text()")
-            t = haici and "海词:\n" + "\n".join(haici) + "\n" or ""
+            t = haici and "<b>󰭻 Haici</b>\n" + "\n".join(haici) + "\n" or ""
         except Exception:
             pass
 
+        print(t)
         return t
 
-    async def youdao(self):
+    async def youdao(self, text):
         t = ""
         youdao = []
-        body = {"q": self.text, "client": "web", "keyfrom": "webdict"}
+        body = {"q": text, "client": "web", "keyfrom": "webdict"}
         try:
             response = self.request.post(
                 self.url["youdao"],
@@ -88,20 +109,21 @@ class trans:
             fanyi = response.json()
 
             if "fanyi" in fanyi:
-                t = "有道:\n" + fanyi["fanyi"]["tran"]
+                t = "<b>󰭻 Youdao</b>\n" + fanyi["fanyi"]["tran"]
             else:
                 for value in fanyi["web_trans"]["web-translation"][0]["trans"]:
-                    youdao.append(self.text + " " + value["value"])
-                t = youdao and "有道:\n" + "\n".join(youdao) + "\n" or ""
+                    youdao.append(value["value"])
+                t = youdao and "<b>󰭻 Youdao</b>\n" + "\n".join(youdao) + "\n" or ""
         except Exception:
             pass
 
+        print(t)
         return t
 
-    async def baidu(self):
+    async def baidu(self, text):
         t = ""
         baidu = []
-        body = {"kw": f"{self.text}"}
+        body = {"kw": f"{text}"}
         try:
             response = self.request.post(
                 self.url["baidu"], headers=self.headers, data=body, timeout=5
@@ -112,55 +134,59 @@ class trans:
             fanyi = response.json()
             for value in fanyi["data"]:
                 baidu.append(value["k"] + " " + value["v"])
-            t = baidu and "百度:\n" + "\n".join(baidu) + "\n" or ""
+            t = baidu and "<b>󰭻 Baidu</b>\n" + "\n".join(baidu) + "\n" or ""
         except Exception:
             pass
 
+        print(t)
         return t
 
 
-def notify(msg, id):
-    subprocess.Popen(["/bin/bash", "-c", f'notify-send -r {id} "翻译" "{msg}"'])
+def notify(title: str, msg: str, id: int):
+    msg = msg.replace("'", "\\'").replace('"', '\\"')
+    subprocess.Popen(["/bin/bash", "-c", f'notify-send -r {id} "{title}" "{msg}"'])
 
 
-async def main():
-    num = 0
-    history = {}
-    pyperclip.copy("")
-    notify("开启翻译", 9527)
+async def main(mouse: misc, translating: trans, c: clip):
+    notify("󰊿 Open Translations", "", 9526)
+    n, read = 0, False
     while True:
-        text = pyperclip.paste()
+        while mouse.bindLeft() == 1:
+            if n >= 1:
+                n = 0
+                read = True
+            n += 1
+            continue
+
+        if not read:
+            c.copy()
+            continue
+
+        read = False
+        text = c.paste()
         text = text.replace("\n", "").replace("\r", "")
-        try:
-            if num == 30:
-                del history[text]
-                num = 0
-        except KeyError:
-            pass
+        if text == "":
+            continue
 
-        try:
-            if history[text]:
-                notify(history[text], 9526)
-                del history[text]
-        except KeyError:
-            if text != "":
-                notify("开始翻译 " + text, 9526)
-                t = trans(text)
-                results = await asyncio.gather(
-                    t.google(), t.haici(), t.youdao(), t.baidu()
-                )
-                tmp = ""
-                for i in results:
-                    tmp += isinstance(i, str) and i or ""
+        notify("󱅫 Start Translating", f"{text}", 9526)
+        results = await asyncio.gather(
+            translating.google(text),
+            translating.haici(text),
+            translating.youdao(text),
+            translating.baidu(text),
+        )
+        trans_text = ""
+        for i in results:
+            trans_text += isinstance(i, str) and i or ""
 
-                history[text] = tmp
-                notify(history[text], 9526)
-        finally:
-            pyperclip.copy("")
-
-        time.sleep(1 / 5)
-        num += 1
+        if trans_text == "":
+            trans_text = "translating to error....please check your network"
+        notify("󰊿 Translate", trans_text, 9526)
+        c.copy()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    mouse = misc()
+    translating = trans()
+    asyncio.run(main(mouse, translating, clip()))
+    mouse.close()

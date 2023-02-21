@@ -1,2 +1,4 @@
 bin/bur*
+bin/hot*/*
 *config*
+autostart.sh

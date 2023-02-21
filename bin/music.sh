@@ -15,7 +15,6 @@ close() {
 
 open() {
   mpd
-  xdotool key super+m
   st -e 'ncmpcpp' &
 }
 

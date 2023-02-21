@@ -11,17 +11,15 @@ tool = {
     "  Open Translate": coproc.format("translate/run.sh"),
     "  Open Picom": coproc.format("picom.sh"),
     "  Open Notify": coproc.format("notify.sh"),
-    "  Open Timeshift": coproc.format("timeshift.sh"),
     "  Set Backgrounds": "feh --randomize --bg-fill ~/Pictures/background/*",
     "  Update statusbar": "$DWM/statusbar/statusbar.py updateall",
 }
 
 check_command = {
-    "  Open Music": "ps -u $USER -o pid,comm | grep 'ncmpcpp' | awk '{print $1}'",
+    "  Open Music": "ps -u $USER -o pid,comm | grep 'mpd' | awk '{print $1}'",
     "  Open Translate": r"ps aux | grep 'translate.py' | grep -v 'grep\|rofi\|nvim'",
     "  Open Notify": r"ps aux | grep dunst | grep -v 'grep\|rofi\|nvim'",
     "  Open Picom": r"ps aux | grep picom | grep -v 'grep\|rofi\|nvim'",
-    "  Open Timeshift": r"ps aux | grep timeshift-gtk | grep -v 'grep\|rofi\|nvim'",
 }
 
 
