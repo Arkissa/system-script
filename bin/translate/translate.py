@@ -52,7 +52,7 @@ class trans:
             else:
                 num -= 1
 
-        tl = num <= 0 and "zh-CN" or "en"
+        tl = num <= 0 and "en" or "zh-CN"
         try:
             response = self.request.get(
                 self.url["google"].format(tl, text),
