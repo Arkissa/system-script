@@ -1,7 +1,6 @@
 #!/bin/python3
 
 import requests
-import xerox
 import subprocess
 import asyncio
 from urllib.parse import quote_plus
@@ -21,10 +20,18 @@ class misc:
 
 class clip:
     def copy(self) -> None:
-        xerox.copy("", True)
+        subprocess.Popen(
+            ["xclip", "-selection", "p"], stdin=subprocess.PIPE, close_fds=True
+        ).communicate(input="".encode())
 
     def paste(self) -> str:
-        return xerox.paste(True)
+        out, err = subprocess.Popen(
+            ["xclip", "-selection", "p", "-o"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            close_fds=True,
+        ).communicate()
+        return out.decode() + err.decode()
 
 
 class trans:
