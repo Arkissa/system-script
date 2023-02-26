@@ -64,13 +64,11 @@ class trans:
 
             fanyi = response.json()
 
-            print(fanyi)
             t = fanyi[0][0] and f"<b>󰭻 Google</b>\n{fanyi[0][0][0]}\n" or ""
         except Exception:
             t = ""
             pass
 
-        print(t)
         return t
 
     async def haici(self, text):
@@ -89,7 +87,6 @@ class trans:
         except Exception:
             pass
 
-        print(t)
         return t
 
     async def youdao(self, text):
@@ -117,7 +114,6 @@ class trans:
         except Exception:
             pass
 
-        print(t)
         return t
 
     async def baidu(self, text):
@@ -138,7 +134,6 @@ class trans:
         except Exception:
             pass
 
-        print(t)
         return t
 
 
@@ -156,13 +151,12 @@ async def main(mouse: misc, translating: trans, c: clip):
                 n = 0
                 read = True
             n += 1
-            continue
 
         if not read:
             c.copy()
             continue
-
-        read = False
+        else:
+            read = False
         text = c.paste()
         text = text.replace("\n", "").replace("\r", "")
         if text == "":
@@ -182,7 +176,6 @@ async def main(mouse: misc, translating: trans, c: clip):
         if trans_text == "":
             trans_text = "translating to error....please check your network"
         notify("󰊿 Translate", trans_text, 9526)
-        c.copy()
 
 
 if __name__ == "__main__":
