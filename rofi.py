@@ -1,14 +1,16 @@
 #!/bin/python3
 
+import os
 import subprocess
 import sys
 
 
 arg = "".join(sys.argv[1:])
 coproc = "coproc (~/scripts/bin/{})"
+translate = "coproc ({}/translate/run.sh)"
 tool = {
     "  Open Music": coproc.format("music.sh"),
-    "  Open Translate": coproc.format("translate/run.sh"),
+    "  Open Translate": translate.format(os.getenv("HOME")),
     "  Open Picom": coproc.format("picom.sh"),
     "  Open Notify": coproc.format("notify.sh"),
     "  Set Backgrounds": "feh --randomize --bg-fill ~/Pictures/background/*",
